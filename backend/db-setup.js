@@ -20,6 +20,7 @@ db.serialize(() => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       session_id TEXT NOT NULL,
       candidate_name TEXT NOT NULL,
+      is_submit BOOL NOT NULL DEFAULT FALSE,
       event_name TEXT,
       start_time DATETIME DEFAULT CURRENT_TIMESTAMP,
       end_time DATETIME,

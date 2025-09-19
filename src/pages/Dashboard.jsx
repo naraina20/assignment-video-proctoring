@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { downloadReport } from "../../backend/report";
+
 
 const Dashboard = () => {
   const [candidates, setCandidates] = useState([]);
+  const [reportDownloading, setReportDownloading] = useState(false);
   const navigate = useNavigate();
 
   // Fetch users from backend
@@ -21,6 +24,12 @@ const Dashboard = () => {
 
     fetchCandidates();
   }, []);
+
+  const candidateReport = (sid) =>{
+    setReportDownloading(true)
+    downloadReport(sid)
+    setReportDownloading(false)
+  }
 
   const handleCandidateClick = (sessionId,candidate) => {
     // Redirect to live stream page with sessionId
@@ -50,7 +59,13 @@ const Dashboard = () => {
                   className="btn btn-primary btn-sm"
                   onClick={() => handleCandidateClick(candidate.session_id,candidate.candidate_name)}
                 >
-                  View Live
+                  {candidate.is_submit? "Recording" : "Live"}
+                </button>
+                <button
+                  className="btn btn-primary btn-sm ms-1"
+                  onClick={() => downloadReport(candidate.sessionId)}
+                >
+                  Download Report <span class={reportDownloading ? "spinner-border spinner-border-sm": "d-none"} role="status" aria-hidden="true"></span>
                 </button>
               </td>
             </tr>

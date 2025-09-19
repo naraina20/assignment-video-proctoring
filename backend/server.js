@@ -24,7 +24,7 @@ const rooms = {};
 
 io.on("connection", (socket) => {
 
-  socket.on("join", ({ roomId }) => {
+  socket.on("join",async ({ roomId }) => {
     socket.roomId = roomId;
     rooms[roomId] = rooms[roomId] || new Set();
     rooms[roomId].add(socket.id);
@@ -33,14 +33,8 @@ io.on("connection", (socket) => {
     const sessionId = roomId?.split("-")[1] || "sessionid";
     const now = Date.now()
     if (candidateName) {
-      let isExist = false
-      db.all(`select session_id from distractions where session_id = ?`, [sessionId], (err, row) => {
-        if (err) return false
-        if (row.length > 0) {
-          isExist = true
-        }
-      })
-      console.log("value isExist ", isExist)
+      let isExist = await checkSessionExists(sessionId)
+      console.log("value isExist ", isExist, candidateName,sessionId)
       if (!isExist) {
         const stmt = db.prepare(`INSERT INTO distractions (session_id, candidate_name, event_name, start_time) VALUES (?, ?, ?, ?)`);
         stmt.run(sessionId, candidateName, "JOINED", now, function (err) {
@@ -67,6 +61,10 @@ io.on("connection", (socket) => {
       socket.to(roomId).emit("signal", { from: socket.id, payload });
     }
   });
+
+  socket.on("submitted", ({roomId}) =>{
+    socket.to(roomId).emit("submitted", {roomId})
+  })
 
 
   socket.on("request-offers", ({ roomId }) => {
@@ -118,7 +116,7 @@ app.post("/upload/finish", (req, res) => {
 // Insert distraction event
 app.post("/api/events", (req, res) => {
   const { sessionId, candidateName, eventName, startTime, endTime, duration } = req.body;
-  if (!eventName || !startTime || !endTime || !duration) {
+  if (!sessionId || !candidateName) {
     return res.status(400).json({ ok: false, error: "missing fields" });
   }
   const stmt = db.prepare(`INSERT INTO distractions (session_id, candidate_name, event_name, start_time, end_time, duration_sec) VALUES (?, ?, ?, ?, ?,?)`);
@@ -141,9 +139,30 @@ app.get("/api/events/:session_id", (req, res) => {
   })
 })
 
+app.get("/api/submitted/:session_id", (req, res) => {
+  const sessionId = req.params.session_id;
+  console.log("session id ", sessionId)
+  const sql = `UPDATE distractions SET is_submit = TRUE WHERE session_id = ?`;
+
+  db.run(sql, [sessionId], function (err) {
+    if (err) {
+      console.error(err.message);
+
+      return res.status(500).json({ error: "Database error" });
+    }
+
+    if (this.changes === 0) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    res.json({ message: "Submission updated successfully", sessionId });
+  });
+});
+
+
 // Get all candidates details
 app.get("/api/candidates", (req, res) => {
-  db.all("SELECT candidate_name, session_id,event_name, start_time FROM distractions WHERE event_name = 'JOINED' ORDER BY start_time DESC", (err, rows) => {
+  db.all("SELECT candidate_name, session_id,event_name, start_time,is_submit FROM distractions WHERE event_name = 'JOINED' ORDER BY start_time DESC", (err, rows) => {
     if (err) return res.status(500).json({ ok: false, error: err.message });
     res.json({ ok: true, rows });
   });
@@ -152,4 +171,16 @@ app.get("/api/candidates", (req, res) => {
 const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => console.log(`Upload server listening on ${PORT}`));
 
+function checkSessionExists(sessionId) {
+  return new Promise((resolve, reject) => {
+    db.get(
+      `SELECT 1 FROM distractions WHERE session_id = ? LIMIT 1`,
+      [sessionId],
+      (err, row) => {
+        if (err) return reject(err);
+        resolve(!!row);
+      }
+    );
+  });
+}
 

@@ -3,6 +3,8 @@ import vision from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3"
 import io from "socket.io-client";
 import NameModal from "../components/Modal";
 import axios from "axios";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router";
 const { FaceLandmarker, FilesetResolver, DrawingUtils } = vision;
 
 // Global variables
@@ -50,6 +52,7 @@ const VideoProctor = () => {
   const [nameModelOpen, setNameModalOpen] = useState(true)
   const [candidateName, setCandidateName] = useState("unknown")
   const [ROOM_ID, setRoomId] = useState(`${candidateName}-${sessionId}`)
+  const navigate = useNavigate()
 
   // Webcam detection loop
   const detectWebCam = useCallback(async () => {
@@ -136,7 +139,7 @@ const VideoProctor = () => {
 
   const toggleWebcam = useCallback(async function () {
     if (!videoRef.current) return;
-
+    console.log("webcam ", webcamRunning)
     if (!webcamRunning) {
       // Turn ON webcam
       try {
@@ -225,8 +228,14 @@ const VideoProctor = () => {
       }
       setWebcamRunning(false);
       console.log("Webcam is OFF");
+      socketRef.current.emit("submitted", {
+        roomId : ROOM_ID 
+      })
+
+      await axios.get(`http://localhost:4000/api/submitted/${sessionId}`);
+      navigate("/")
     }
-  }, [ROOM_ID])
+  }, [ROOM_ID,webcamRunning])
 
 
   const sendChunk = useCallback(async function (blob, sessionId, seq) {
@@ -291,18 +300,18 @@ const VideoProctor = () => {
     const distractedSec = (now - distractionStartTime) / 1000;
 
     // ********** Logging after every 2 secs
-    if (now - lastLogTime >= 2000) {
-      secondsCounter += 2
-      lastLogTime = now;
-      console.log("eyeLookOut ", FOCUS_THRESHOLDS.eyeLookOut, eyeLookOut.toFixed(2))
-      console.log("eyeLookUpDown ", FOCUS_THRESHOLDS.eyeLookUpDown, eyeLookUpDown.toFixed(2))
-      console.log("jawLeftRight ", FOCUS_THRESHOLDS.jawLeftRight, jawLeftRight.toFixed(4))
-      console.log("jawForward ", FOCUS_THRESHOLDS.jawForward, jawForward.toFixed(4))
-      console.log("maxFaces ", FOCUS_THRESHOLDS.maxFaces, numFaces)
-      console.log("second ", secondsCounter)
-      console.log("***********************************")
-      lastLogTime = now;
-    }
+    // if (now - lastLogTime >= 2000) {
+    //   secondsCounter += 2
+    //   lastLogTime = now;
+    //   console.log("eyeLookOut ", FOCUS_THRESHOLDS.eyeLookOut, eyeLookOut.toFixed(2))
+    //   console.log("eyeLookUpDown ", FOCUS_THRESHOLDS.eyeLookUpDown, eyeLookUpDown.toFixed(2))
+    //   console.log("jawLeftRight ", FOCUS_THRESHOLDS.jawLeftRight, jawLeftRight.toFixed(4))
+    //   console.log("jawForward ", FOCUS_THRESHOLDS.jawForward, jawForward.toFixed(4))
+    //   console.log("maxFaces ", FOCUS_THRESHOLDS.maxFaces, numFaces)
+    //   console.log("second ", secondsCounter)
+    //   console.log("***********************************")
+    //   lastLogTime = now;
+    // }
 
     await handleEvent("eye_away", isEyeAway);
     await handleEvent("face_not_straight", isFaceNotStraight);
@@ -422,7 +431,7 @@ const VideoProctor = () => {
               disabled={btnDisable}
               className={`btn ${webcamRunning ? "btn-danger" : "btn-success"} btn-lg px-5`}
             >
-              {webcamRunning ? "Turn Webcam Off" : "Turn Webcam On"}
+              {webcamRunning ? "Submit Intgerview" : "Start Interview"}
             </button>
           </div>
         </div>

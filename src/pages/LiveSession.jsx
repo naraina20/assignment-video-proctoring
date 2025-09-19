@@ -4,6 +4,8 @@ import { useParams } from "react-router-dom";
 import io from "socket.io-client";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { Toast } from "bootstrap";
+import { toast } from "react-toastify";
 
 const LiveSession = () => {
   const { candidate, session_id } = useParams(); // get from URL
@@ -55,6 +57,13 @@ const LiveSession = () => {
       }
     });
 
+    socketRef.current.on("submitted", ({ roomId }) => {
+      if(ROOM_ID == roomId){
+        toast.info("Interview Completed")
+        navigate("/dashboard")
+      }
+    })
+
     // ICE candidates
     pcRef.current.onicecandidate = (event) => {
       if (event.candidate) {
@@ -92,11 +101,11 @@ const LiveSession = () => {
   return (
     <div className="container py-4">
       <div className="d-flex justify-content-between align-items-center my-3">
-      <h3 className="mb-3">Live Session: {candidate}</h3>
-      <button className="btn btn-primary" onClick={()=> navigate("/dashboard")}>Go to Dashboard</button>
+        <h3 className="mb-3">Live Session: {candidate}</h3>
+        <button className="btn btn-primary" onClick={() => navigate("/dashboard")}>Go to Dashboard</button>
       </div>
 
-      <div className="row" style={{height: "85vh"}}>
+      <div className="row" style={{ height: "85vh" }}>
         {/* Video Section */}
         <div className="col-md-8">
           <div className="card shadow-sm">
@@ -123,15 +132,15 @@ const LiveSession = () => {
                   {events.map((e, idx) => (
                     <li key={idx} className="list-group-item">
                       <strong className="badge bg-info">{e.event_name}</strong>
-                      <strong className="d-block">Duration : {e.duration_sec.toFixed(1)} Sec</strong>
-                      <hr/>
+                      <strong className="d-block">Duration : {e.duration_sec?.toFixed(1)} Sec</strong>
+                      <hr />
                       <div className="d-flex flex-column">
-                      <strong>Start at:</strong><small className="text-muted">
-                        {new Date(e.start_time).toLocaleString()}
-                      </small>
-                      <strong >End at:</strong><small className="text-muted">
-                        {new Date(e.end_time).toLocaleString()}
-                      </small>
+                        <strong>Start at:</strong><small className="text-muted">
+                          {new Date(e.start_time).toLocaleString()}
+                        </small>
+                        <strong >End at:</strong><small className="text-muted">
+                          {new Date(e.end_time).toLocaleString()}
+                        </small>
                       </div>
                     </li>
                   ))}
