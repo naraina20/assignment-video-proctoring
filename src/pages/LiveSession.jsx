@@ -21,7 +21,7 @@ const LiveSession = () => {
 
   // Initialize WebRTC + Socket.IO
   useEffect(() => {
-    socketRef.current = io("http://localhost:4000"); // backend signaling server
+    socketRef.current = io(import.meta.env.VITE_BACKEND_URL); // backend signaling server
     pcRef.current = new RTCPeerConnection();
 
     // Set remote stream
@@ -37,9 +37,7 @@ const LiveSession = () => {
 
     // Handle signaling
     socketRef.current.on("signal", async ({ payload }) => {
-      console.log("data in signla ", payload)
       if (payload.type === "offer") {
-        console.log("GOT OFFER ===> ")
         await pcRef.current.setRemoteDescription(new RTCSessionDescription(payload));
         const answer = await pcRef.current.createAnswer();
         await pcRef.current.setLocalDescription(answer);
@@ -49,7 +47,6 @@ const LiveSession = () => {
         });
 
       } else if (payload.type === "candidate") {
-        console.log("GOT CANDIDATE ===> ")
         try {
           await pcRef.current.addIceCandidate(new RTCIceCandidate(payload.candidate));
         } catch (e) {
@@ -86,10 +83,10 @@ const LiveSession = () => {
     const fetchEvents = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:4000/api/events/${session_id}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/events/${session_id}`
         );
         setEvents(res.data.rows || []);
-        setIsSubmitted(res.data.rows[0].is_submit)
+        setIsSubmitted(res.data?.rows[0]?.is_submit)
       } catch (err) {
         console.error("Error fetching events", err);
       }
@@ -112,7 +109,7 @@ const LiveSession = () => {
         <div className="col-md-8">
           <div className="card shadow-sm">
             <div className="card-body">
-              {isSubmitted ? <video src={`http://localhost:4000/video/${candidate}-${session_id}.webm`} controls playsInline style={{ width: "100%", borderRadius: "8px" }}>
+              {isSubmitted ? <video src={`${import.meta.env.VITE_BACKEND_URL}/video/${candidate}-${session_id}.webm`} controls playsInline style={{ width: "100%", borderRadius: "8px" }}>
 
               </video>: <video
                 ref={videoRef}
@@ -137,15 +134,16 @@ const LiveSession = () => {
                   {events.map((e, idx) => (
                     <li key={idx} className="list-group-item">
                       <strong className="badge bg-info">{e.event_name}</strong>
-                      <strong className="d-block">Duration : {e.duration_sec?.toFixed(1)} Sec</strong>
+                      {e.duration_sec ? <p><strong className="d-block">Duration : {e.duration_sec?.toFixed(1)} Sec</strong></p> : ''}
                       <hr />
                       <div className="d-flex flex-column">
-                        <strong>Start at:</strong><small className="text-muted">
+                        {e.start_time ? <p><strong>Start at:</strong><small className="text-muted">
                           {new Date(e.start_time).toLocaleString()}
-                        </small>
-                        <strong >End at:</strong><small className="text-muted">
+                        </small></p> : ''}
+                        
+                        {e.end_time? <p><strong >End at:</strong><small className="text-muted">
                           {new Date(e.end_time).toLocaleString()}
-                        </small>
+                        </small></p> : '' }
                       </div>
                     </li>
                   ))}

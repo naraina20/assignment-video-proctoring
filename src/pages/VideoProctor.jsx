@@ -38,7 +38,7 @@ let lastLogTime = 0
 let secondsCounter = 0;
 
 // websocket connection
-const SIGNAL_SERVER_URL = "http://localhost:4000";
+const SIGNAL_SERVER_URL = import.meta.env.VITE_BACKEND_URL;
 let sessionId = "session_" + Date.now();
 
 const VideoProctor = () => {
@@ -139,7 +139,6 @@ const VideoProctor = () => {
 
   const toggleWebcam = useCallback(async function () {
     if (!videoRef.current) return;
-    console.log("webcam ", webcamRunning)
     if (!webcamRunning) {
       // Turn ON webcam
       try {
@@ -155,7 +154,6 @@ const VideoProctor = () => {
 
         // Handle signaling from backend
         socketRef.current.on("signal", async ({ payload }) => {
-          console.log("payload on candidate ", payload)
           if (payload.type === "answer") {
             await pcRef.current.setRemoteDescription(new RTCSessionDescription(payload.sdp)); 
           }
@@ -172,7 +170,6 @@ const VideoProctor = () => {
         await startStreaming()
 
         socketRef.current.on("send-offer-to-late-joiner", async ({ newPeerId }) => {
-          console.log("request offer peer id ", newPeerId)
           // Send ICE candidates as usual
           pcRef.current.onicecandidate = (event) => {
             if (event.candidate) {
@@ -232,7 +229,7 @@ const VideoProctor = () => {
         roomId : ROOM_ID 
       })
 
-      await axios.get(`http://localhost:4000/api/submitted/${sessionId}`);
+      await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/submitted/${sessionId}`);
       navigate("/")
     }
   }, [ROOM_ID,webcamRunning])
@@ -241,7 +238,7 @@ const VideoProctor = () => {
   const sendChunk = useCallback(async function (blob, sessionId, seq) {
     try {
       // use fetch with raw body
-      const url = `http://localhost:4000/upload/chunk?sessionId=${encodeURIComponent(sessionId)}&candidate_name=${candidateName}&seq=${seq}`;
+      const url = `${import.meta.env.VITE_BACKEND_URL}/upload/chunk?sessionId=${encodeURIComponent(sessionId)}&candidate_name=${candidateName}&seq=${seq}`;
       const res = await fetch(url, {
         method: "POST",
         headers: {
@@ -325,7 +322,7 @@ const VideoProctor = () => {
         const duration = (now - event.start) / 1000;
         if (duration >= 2) {
           // Save event in DB
-          await axios.post("http://localhost:4000/api/events/", { sessionId, candidateName, eventName, startTime: event.start, endTime: now, duration });
+          await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/events/`, { sessionId, candidateName, eventName, startTime: event.start, endTime: now, duration });
           console.warn(`⚠️ Event logged:${candidateName} ${eventName} for ${duration.toFixed(1)} sec`);
           event.start = null; // reset after storing
           distractionStartTime = now;
@@ -373,7 +370,6 @@ const VideoProctor = () => {
     try {
       const offer = await pcRef.current.createOffer();
       await pcRef.current.setLocalDescription(offer);
-      console.log("room id in start streamiung ", ROOM_ID)
       socketRef.current.emit("signal", {
         roomId: ROOM_ID,
         payload: { type: "offer", sdp: offer }

@@ -13,7 +13,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchCandidates = async () => {
       try {
-        const res = await axios.get("http://localhost:4000/api/candidates"); // create this API on backend
+        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/candidates`); // create this API on backend
         if (res.data.ok) {
           setCandidates(res.data.rows); // assuming backend returns { rows: [{ name, sessionId }, ...] }
         }
@@ -26,7 +26,6 @@ const Dashboard = () => {
   }, []);
 
   const candidateReport = (sid) =>{
-    console.log("sid ", sid)
     setReportDownloading(true)
     downloadReport(sid)
     setReportDownloading(false)
@@ -36,9 +35,9 @@ const Dashboard = () => {
     // Redirect to live stream page with sessionId
     navigate(`${candidate}/live/${sessionId}`);
   };
-  console.log("candidates ", candidates)
   return (
     <div className="container mt-4">
+      
       <h2 className="mb-3">Candidate Dashboard</h2>
       <table className="table table-striped table-bordered">
         <thead>
@@ -66,7 +65,7 @@ const Dashboard = () => {
                   className="btn btn-primary btn-sm ms-1"
                   onClick={() => candidateReport(candidate.session_id)}
                 >
-                  Download Report <span class={reportDownloading ? "spinner-border spinner-border-sm": "d-none"} role="status" aria-hidden="true"></span>
+                  Download Report <span className={reportDownloading ? "spinner-border spinner-border-sm": "d-none"} role="status" aria-hidden="true"></span>
                 </button>
               </td>
             </tr>

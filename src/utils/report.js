@@ -5,7 +5,7 @@ import axios from "axios";
 export async function downloadReport(sessionId) {
   try {
     console.log("Fetching session data for ID:", sessionId);
-    const { data } = await axios.get(`http://localhost:4000/api/events/${sessionId}`);
+    const { data } = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/events/${sessionId}`);
     const events = data.rows;
 
     if (!events || events.length === 0) {

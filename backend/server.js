@@ -166,7 +166,7 @@ app.post("/api/events", (req, res) => {
 // Get all events for a candidate
 app.get("/api/events/:session_id", (req, res) => {
   const sessionId = req.params.session_id;
-  db.all("SELECT session_id,candidate_name,event_name,start_time,end_time,duration_sec,is_submit FROM distractions WHERE event_name IS NOT 'JOINED' AND session_id = ? ORDER BY start_time", [sessionId], (err, rows) => {
+  db.all("SELECT session_id,candidate_name,event_name,start_time,end_time,duration_sec,is_submit FROM distractions WHERE session_id = ? ORDER BY start_time", [sessionId], (err, rows) => {
     if (err) return res.status(500).json({ ok: false, error: err.message })
     res.json({ ok: true, rows })
   })

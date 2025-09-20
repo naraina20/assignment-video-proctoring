@@ -34,7 +34,7 @@ function NameModal({ isOpen, onClose, onSave }) {
           autoFocus
         />
         <div className="d-flex justify-content-end gap-2">
-          <button className="btn btn-primary" onClick={handleSave}>
+          <button type="button" className="btn btn-primary" onClick={handleSave}>
             Save
           </button>
         </div>
