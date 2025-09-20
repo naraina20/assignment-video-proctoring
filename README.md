@@ -6,8 +6,19 @@ It tracks user **eye movement, head position, and distractions** using [MediaPip
 ---
 
 SCREEN SHOTS
-
+Home page
 ![Home page](image.png)
+
+Interviewee Interface
+<img width="1288" height="849" alt="image" src="https://github.com/user-attachments/assets/54b6767d-eeae-4ab2-a121-56c61af736be" />
+
+Live Stream and Recording for interviewer 
+<img width="1588" height="967" alt="image" src="https://github.com/user-attachments/assets/7f7f5d6e-5c2e-4030-b88d-6ae44c0fd003" />
+
+Dashboard
+<img width="1640" height="903" alt="image" src="https://github.com/user-attachments/assets/9774e0bb-01df-470f-b92d-f0c54c1c8127" />
+
+
 
 ## 🚀 Getting Started
 
@@ -83,5 +94,5 @@ VITE_BACKEND_URL=http://localhost:4000
 ---
 
 ## 👨‍💻 Author
-Developed by **Naraina**  
+Developed by **Narayan Dewasi**  
 Full-stack Developer | MERN | AI Enthusiast
