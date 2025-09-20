@@ -55,7 +55,7 @@ const VideoProctor = () => {
   const navigate = useNavigate()
 
   // Webcam detection loop
-  const detectWebCam = useCallback(async () => {
+  const detectWebCam = async () => {
     const videoEl = videoRef.current;
     const canvasEl = canvasRef.current;
     const ctx = canvasEl.getContext("2d");
@@ -84,7 +84,7 @@ const VideoProctor = () => {
     }
 
     requestAnimationFrame(detectWebCam);
-  }, []);
+  };
 
 
   useEffect(() => {
@@ -199,17 +199,17 @@ const VideoProctor = () => {
 
 
         // Record the video
-        // const options = { mimeType: "video/webm; codecs=vp8,opus" };
-        // mediaRecorder = new MediaRecorder(stream, options);
+        const options = { mimeType: "video/webm; codecs=vp8,opus" };
+        mediaRecorder = new MediaRecorder(stream, options);
 
-        // mediaRecorder.ondataavailable = async (e) => {
-        //   if (!e.data || e.data.size === 0) return;
-        //   // Send chunk to backend
-        //   await sendChunk(e.data, sessionId, ++chunkSeq);
-        // };
+        mediaRecorder.ondataavailable = async (e) => {
+          if (!e.data || e.data.size === 0) return;
+          // Send chunk to backend
+          await sendChunk(e.data, sessionId, ++chunkSeq);
+        };
 
-        // mediaRecorder.start(2000);
-        // sending = true;
+        mediaRecorder.start(2000);
+        sending = true;
         console.log("Webcam is ON")
       } catch (err) {
         console.error("Error accessing webcam:", err);
@@ -300,18 +300,18 @@ const VideoProctor = () => {
     const distractedSec = (now - distractionStartTime) / 1000;
 
     // ********** Logging after every 2 secs
-    // if (now - lastLogTime >= 2000) {
-    //   secondsCounter += 2
-    //   lastLogTime = now;
-    //   console.log("eyeLookOut ", FOCUS_THRESHOLDS.eyeLookOut, eyeLookOut.toFixed(2))
-    //   console.log("eyeLookUpDown ", FOCUS_THRESHOLDS.eyeLookUpDown, eyeLookUpDown.toFixed(2))
-    //   console.log("jawLeftRight ", FOCUS_THRESHOLDS.jawLeftRight, jawLeftRight.toFixed(4))
-    //   console.log("jawForward ", FOCUS_THRESHOLDS.jawForward, jawForward.toFixed(4))
-    //   console.log("maxFaces ", FOCUS_THRESHOLDS.maxFaces, numFaces)
-    //   console.log("second ", secondsCounter)
-    //   console.log("***********************************")
-    //   lastLogTime = now;
-    // }
+    if (now - lastLogTime >= 2000) {
+      secondsCounter += 2
+      lastLogTime = now;
+      console.log("eyeLookOut ", FOCUS_THRESHOLDS.eyeLookOut, eyeLookOut.toFixed(2))
+      console.log("eyeLookUpDown ", FOCUS_THRESHOLDS.eyeLookUpDown, eyeLookUpDown.toFixed(2))
+      console.log("jawLeftRight ", FOCUS_THRESHOLDS.jawLeftRight, jawLeftRight.toFixed(4))
+      console.log("jawForward ", FOCUS_THRESHOLDS.jawForward, jawForward.toFixed(4))
+      console.log("maxFaces ", FOCUS_THRESHOLDS.maxFaces, numFaces)
+      console.log("second ", secondsCounter)
+      console.log("***********************************")
+      lastLogTime = now;
+    }
 
     await handleEvent("eye_away", isEyeAway);
     await handleEvent("face_not_straight", isFaceNotStraight);
@@ -326,7 +326,7 @@ const VideoProctor = () => {
         if (duration >= 2) {
           // Save event in DB
           await axios.post("http://localhost:4000/api/events/", { sessionId, candidateName, eventName, startTime: event.start, endTime: now, duration });
-          console.warn(`⚠️ Event logged: ${eventName} for ${duration.toFixed(1)} sec`);
+          console.warn(`⚠️ Event logged:${candidateName} ${eventName} for ${duration.toFixed(1)} sec`);
           event.start = null; // reset after storing
           distractionStartTime = now;
         }
@@ -347,7 +347,7 @@ const VideoProctor = () => {
     // } else {
     //   distractionStartTime = null; // reset timer if candidate is focused
     // }
-  }, [ROOM_ID])
+  }, [ROOM_ID,candidateName])
 
 
   const createFaceLandmarker = useCallback(async function () {

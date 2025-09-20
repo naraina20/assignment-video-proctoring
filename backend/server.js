@@ -10,6 +10,7 @@ const { Server } = require("socket.io");
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use("/static", express.static(path.join(__dirname, "uploads")));
 
 // websocket
 const server = http.createServer(app);
@@ -106,6 +107,37 @@ app.post("/upload/chunk", express.raw({ type: "video/webm", limit: "100mb" }), (
   }
 });
 
+app.get("/video/:filename", (req, res) => {
+  const filePath = path.join(__dirname, "uploads", req.params.filename);
+  const stat = fs.statSync(filePath);
+  const fileSize = stat.size;
+
+  const range = req.headers.range;
+  if (!range) {
+    // send whole file if no range is requested
+    res.writeHead(200, {
+      "Content-Length": fileSize,
+      "Content-Type": "video/mp4"
+    });
+    fs.createReadStream(filePath).pipe(res);
+  } else {
+    const parts = range.replace(/bytes=/, "").split("-");
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+    const chunkSize = end - start + 1;
+
+    res.writeHead(206, {
+      "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+      "Accept-Ranges": "bytes",
+      "Content-Length": chunkSize,
+      "Content-Type": "video/mp4"
+    });
+
+    fs.createReadStream(filePath, { start, end }).pipe(res);
+  }
+});
+
+
 // Uploading finish
 app.post("/upload/finish", (req, res) => {
   const sessionId = req.query.sessionId || "session_unknown";
@@ -131,9 +163,10 @@ app.post("/api/events", (req, res) => {
   stmt.finalize();
 });
 
+// Get all events for a candidate
 app.get("/api/events/:session_id", (req, res) => {
   const sessionId = req.params.session_id;
-  db.all("SELECT session_id,event_name,start_time,end_time,duration_sec FROM distractions WHERE event_name IS NOT 'JOINED' AND session_id = ? ORDER BY start_time", [sessionId], (err, rows) => {
+  db.all("SELECT session_id,candidate_name,event_name,start_time,end_time,duration_sec,is_submit FROM distractions WHERE event_name IS NOT 'JOINED' AND session_id = ? ORDER BY start_time", [sessionId], (err, rows) => {
     if (err) return res.status(500).json({ ok: false, error: err.message })
     res.json({ ok: true, rows })
   })
@@ -177,6 +210,7 @@ function checkSessionExists(sessionId) {
       `SELECT 1 FROM distractions WHERE session_id = ? LIMIT 1`,
       [sessionId],
       (err, row) => {
+        console.log("already existed candidate ", row)
         if (err) return reject(err);
         resolve(!!row);
       }

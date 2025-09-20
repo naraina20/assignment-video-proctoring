@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { downloadReport } from "../../backend/report";
+import { downloadReport } from "../utils/report";
 
 
 const Dashboard = () => {
@@ -26,6 +26,7 @@ const Dashboard = () => {
   }, []);
 
   const candidateReport = (sid) =>{
+    console.log("sid ", sid)
     setReportDownloading(true)
     downloadReport(sid)
     setReportDownloading(false)
@@ -63,7 +64,7 @@ const Dashboard = () => {
                 </button>
                 <button
                   className="btn btn-primary btn-sm ms-1"
-                  onClick={() => downloadReport(candidate.sessionId)}
+                  onClick={() => candidateReport(candidate.session_id)}
                 >
                   Download Report <span class={reportDownloading ? "spinner-border spinner-border-sm": "d-none"} role="status" aria-hidden="true"></span>
                 </button>

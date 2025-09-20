@@ -32,7 +32,7 @@ const HomePage = () => {
                     Begin your proctored examination. Ensure your environment is ready for a smooth experience.
                   </Card.Text>
                   <div className="d-grid">
-                    <Button variant="success" size="lg" className="rounded-pill px-4 py-2 shadow-sm custom-button" onClick={()=> window.open("/dashboard", "_blank")}> {/* Adjusted padding */}
+                    <Button variant="success" size="lg" className="rounded-pill px-4 py-2 shadow-sm custom-button" onClick={()=> window.open("/live/interview", "_blank")}> {/* Adjusted padding */}
                       Start Interview
                     </Button>
                   </div>

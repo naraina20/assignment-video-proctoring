@@ -17,6 +17,7 @@ const LiveSession = () => {
   const socketRef = useRef(null);
 
   const [events, setEvents] = useState([]);
+  const [isSubmitted, setIsSubmitted] = useState(0);
 
   // Initialize WebRTC + Socket.IO
   useEffect(() => {
@@ -88,6 +89,7 @@ const LiveSession = () => {
           `http://localhost:4000/api/events/${session_id}`
         );
         setEvents(res.data.rows || []);
+        setIsSubmitted(res.data.rows[0].is_submit)
       } catch (err) {
         console.error("Error fetching events", err);
       }
@@ -101,7 +103,7 @@ const LiveSession = () => {
   return (
     <div className="container py-4">
       <div className="d-flex justify-content-between align-items-center my-3">
-        <h3 className="mb-3">Live Session: {candidate}</h3>
+        <h3 className="mb-3">Live Session: {candidate}  <span className="badge bg-danger">{isSubmitted ? "Submitted" : "Live"}</span></h3>
         <button className="btn btn-primary" onClick={() => navigate("/dashboard")}>Go to Dashboard</button>
       </div>
 
@@ -110,12 +112,15 @@ const LiveSession = () => {
         <div className="col-md-8">
           <div className="card shadow-sm">
             <div className="card-body">
-              <video
+              {isSubmitted ? <video src={`http://localhost:4000/video/${candidate}-${session_id}.webm`} controls playsInline style={{ width: "100%", borderRadius: "8px" }}>
+
+              </video>: <video
                 ref={videoRef}
                 autoPlay
                 playsInline
                 style={{ width: "100%", borderRadius: "8px" }}
-              ></video>
+              ></video>}
+              
             </div>
           </div>
         </div>
